@@ -1,85 +1,13 @@
 package main
-
-import (
-	"flag"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"strings"
-
-	"github.com/line/line-bot-sdk-go/linebot"
-	"gopkg.in/xmlpath.v2"
-)
-
-var isInStock = false
-var APIKey *string
-
-var APISecret *string
-
-/*Need to figure out is it going to check forever and the rate at which it checks */
-func main() {
-	// get api key and secret from io
-	APIKey = flag.String("key", "", "defines the api key to acsess line bot")
-
-	if *APIKey == "" {
-		log.Fatal("API key not given ")
+	import (
+	    "fmt"
+	    "net/http"
+	    "os" 
+	)
+	func handler(w http.ResponseWriter, r *http.Request) {
+	    fmt.Fprintf(w, "You just browsed page (if blank you're at the root): %s", r.URL.Path[1:])
 	}
-	APISecret = flag.String("secret", "", "defines the api secret to access line bot")
-
-	if *APISecret == "" {
-		log.Fatal("API secret not given")
+	func main() {
+	    http.HandleFunc("/", handler)
+	    http.ListenAndServe(":"+os.Getenv("HTTP\\_PLATFORM\\_PORT"), nil)
 	}
-
-	flag.Parse()
-
-	http.HandleFunc("/line", LineWebHook)
-
-}
-
-//LineWebHook fuction for http response
-func LineWebHook(w http.ResponseWriter, r *http.Request) {
-	bot, err := linebot.New(*APIKey, "hi")
-	panicError(err)
-	events, err := bot.ParseRequest(r)
-	panicError(err)
-
-	for _, event := range events {
-		if event.Type == linebot.EventTypeMessage {
-			switch event.Message.(type) {
-			case *linebot.TextMessage:
-				var message = event.Message.(*linebot.TextMessage)
-				fmt.Println(message.Text)
-			}
-
-		}
-	}
-
-}
-
-func GetStockInfo(responseBody *io.ReadCloser) {
-	root, err := xmlpath.ParseHTML(*responseBody)
-	panicError(err)
-	xpath := xmlpath.MustCompile("//div[@class = \"buyNowButton\"]")
-	if stockString, ok := xpath.String(root); ok {
-		stockString = strings.TrimSpace(stockString)
-		stockString = strings.ToLower(stockString)
-		fmt.Println(stockString)
-		switch stockString {
-		case "out of stock":
-			fmt.Println("sorry :(")
-		case "i want to buy this item":
-			fmt.Println("yay in stock")
-			// email user
-		default:
-			fmt.Println("invalid url inputed ")
-
-		}
-	}
-}
-
-func panicError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
