@@ -48,7 +48,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var bytes, err1 = ioutil.ReadAll(r.Body)
 	if err1 == nil {
-		fmt.Println(w, bytes)
+		fmt.Println(w,string( bytes))
 	}
 
 	/*
