@@ -49,7 +49,14 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	panicError(err)
 
 	events, err := bot.ParseRequest(r)
-	panicError(err)
+	if err != nil {
+		if err == linebot.ErrInvalidSignature {
+			w.WriteHeader(400)
+		} else {
+			w.WriteHeader(500)
+		}
+		return
+	}
 	//fmt.Println(w, "hellow")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
