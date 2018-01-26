@@ -43,7 +43,7 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 
 //LineWebHook fuction for http response
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
-	bot, err := linebot.New(channelAccessToken, APISecret)
+	bot, err := linebot.New(APISecret, channelAccessToken)
 	panicError(err)
 	events, err := bot.ParseRequest(r)
 	panicError(err)
