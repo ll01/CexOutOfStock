@@ -47,7 +47,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	panicError(err)
 	events, err := bot.ParseRequest(r)
 	panicError(err)
-
+	fmt.Println(w, "hellow")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
 			switch event.Message.(type) {
