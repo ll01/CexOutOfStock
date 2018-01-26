@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -23,17 +22,18 @@ func main() {
 	APIKey = flag.String("key", "", "defines the api key to acsess line bot")
 
 	if *APIKey == "" {
-		log.Fatal("API key not given ")
+		//log.Fatal("API key not given ")
 	}
 	APISecret = flag.String("secret", "", "defines the api secret to access line bot")
 
 	if *APISecret == "" {
-		log.Fatal("API secret not given")
+		//log.Fatal("API secret not given")
 	}
 
 	flag.Parse()
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
+	http.ListenAndServe(":8000", nil)
 
 }
 
