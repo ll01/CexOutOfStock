@@ -37,7 +37,7 @@ func main() {
 
 //MainPage fuction for http response
 func MainPage(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello"))
+	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
 }
 
 //LineWebHook fuction for http response
