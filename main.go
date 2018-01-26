@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -41,31 +40,32 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
 }
 
+var c = 0
+
 //LineWebHook fuction for http response
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
-	//bot, err := linebot.New(APISecret, channelAccessToken)
-	//panicError(err)
-	defer r.Body.Close()
-	var bytes, err1 = ioutil.ReadAll(r.Body)
-	if err1 == nil {
-		fmt.Println(w,string( bytes))
-	}
-
+	c++
 	/*
-		events, err := bot.ParseRequest(r)
+		bot, err := linebot.New(APISecret, channelAccessToken)
 		panicError(err)
-		//fmt.Println(w, "hellow")
-		for _, event := range events {
-			if event.Type == linebot.EventTypeMessage {
-				switch event.Message.(type) {
-				case *linebot.TextMessage:
-					var message = event.Message.(*linebot.TextMessage)
-					fmt.Println(w, message.Text)
-				}
 
+
+
+			events, err := bot.ParseRequest(r)
+			panicError(err)
+			//fmt.Println(w, "hellow")
+			for _, event := range events {
+				if event.Type == linebot.EventTypeMessage {
+					switch event.Message.(type) {
+					case *linebot.TextMessage:
+						var message = event.Message.(*linebot.TextMessage)
+						fmt.Println(w, message.Text)
+					}
+
+				}
 			}
-		}
 	*/
+	fmt.Println(c)
 }
 
 func GetStockInfo(responseBody *io.ReadCloser) {
