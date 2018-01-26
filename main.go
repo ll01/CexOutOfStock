@@ -19,18 +19,18 @@ var APISecret string
 /*Need to figure out is it going to check forever and the rate at which it checks */
 func main() {
 	// get api key and secret from io
-	//channelAccessToken = os.Getenv("channel")
+	channelAccessToken = os.Getenv("channel")
 	if channelAccessToken == "" {
 		//log.Fatal("API key not given ")
 	}
-//	APISecret = os.Getenv("secret")
+	APISecret = os.Getenv("secret")
 
 	if APISecret == "" {
 		//log.Fatal("API secret not given")
 	}
 
 	http.HandleFunc("/", MainPage)
-	http.HandleFunc("/line", LineWebHook)
+	//http.HandleFunc("/line", LineWebHook)
 	http.ListenAndServe(":8000", nil)
 
 }
