@@ -19,7 +19,7 @@ var APISecret string
 func main() {
 	http.HandleFunc("/", MainPage)
 	fmt.Println("listening...")
-	err := http.ListenAndServe(":8000", nil)
+	err := http.ListenAndServe(":4747", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
