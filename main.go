@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"gopkg.in/xmlpath.v2"
@@ -65,7 +66,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 	*/
-	fmt.Println(w, c)
+	fmt.Fprintf(w, strconv.Itoa(c))
 }
 
 func GetStockInfo(responseBody *io.ReadCloser) {
