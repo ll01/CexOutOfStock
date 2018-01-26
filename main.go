@@ -53,7 +53,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 			switch event.Message.(type) {
 			case *linebot.TextMessage:
 				var message = event.Message.(*linebot.TextMessage)
-				fmt.Println(message.Text)
+				fmt.Println(w, message.Text)
 			}
 
 		}
