@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/line/line-bot-sdk-go/linebot"
 	"gopkg.in/xmlpath.v2"
 )
 
@@ -43,22 +43,29 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 
 //LineWebHook fuction for http response
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
-	bot, err := linebot.New(APISecret, channelAccessToken)
-	panicError(err)
-	events, err := bot.ParseRequest(r)
-	panicError(err)
-	//fmt.Println(w, "hellow")
-	for _, event := range events {
-		if event.Type == linebot.EventTypeMessage {
-			switch event.Message.(type) {
-			case *linebot.TextMessage:
-				var message = event.Message.(*linebot.TextMessage)
-				fmt.Println(w, message.Text)
-			}
-
-		}
+	//bot, err := linebot.New(APISecret, channelAccessToken)
+	//panicError(err)
+	defer r.Body.Close()
+	var bytes, err1 = ioutil.ReadAll(r.Body)
+	if err1 == nil {
+		fmt.Println(w, bytes)
 	}
 
+	/*
+		events, err := bot.ParseRequest(r)
+		panicError(err)
+		//fmt.Println(w, "hellow")
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch event.Message.(type) {
+				case *linebot.TextMessage:
+					var message = event.Message.(*linebot.TextMessage)
+					fmt.Println(w, message.Text)
+				}
+
+			}
+		}
+	*/
 }
 
 func GetStockInfo(responseBody *io.ReadCloser) {
