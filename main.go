@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -60,10 +61,11 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(w, "hellow")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
-			switch event.Message.(type) {
+			switch message := event.Message.(type) {
 			case *linebot.TextMessage:
-				var message = event.Message.(*linebot.TextMessage)
-				fmt.Println(w, message.Text)
+				if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+					log.Print(err)
+				}
 			}
 
 		}
