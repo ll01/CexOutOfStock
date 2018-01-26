@@ -65,7 +65,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 	*/
-	fmt.Println(c)
+	fmt.Println(w, c)
 }
 
 func GetStockInfo(responseBody *io.ReadCloser) {
