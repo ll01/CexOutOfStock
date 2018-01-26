@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/line/line-bot-sdk-go/linebot"
@@ -34,28 +32,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", MainPage)
-	http.HandleFunc("/line", func(w http.ResponseWriter, req *http.Request) {
-		bot, err := linebot.New(APISecret, channelAccessToken)
-		events, err := bot.ParseRequest(req)
-		if err != nil {
-			if err == linebot.ErrInvalidSignature {
-				w.WriteHeader(400)
-			} else {
-				w.WriteHeader(500)
-			}
-			return
-		}
-		for _, event := range events {
-			if event.Type == linebot.EventTypeMessage {
-				switch message := event.Message.(type) {
-				case *linebot.TextMessage:
-					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
-						log.Print(err)
-					}
-				}
-			}
-		}
-	})
+	http.HandleFunc("/line", LineWebHook)
 	http.ListenAndServe(portAsString, nil)
 
 }
@@ -65,32 +42,25 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
 }
 
-var c = 0
-
 //LineWebHook fuction for http response
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
-	c++
-	/*
-		bot, err := linebot.New(APISecret, channelAccessToken)
-		panicError(err)
 
+	bot, err := linebot.New(APISecret, channelAccessToken)
+	panicError(err)
 
-
-			events, err := bot.ParseRequest(r)
-			panicError(err)
-			//fmt.Println(w, "hellow")
-			for _, event := range events {
-				if event.Type == linebot.EventTypeMessage {
-					switch event.Message.(type) {
-					case *linebot.TextMessage:
-						var message = event.Message.(*linebot.TextMessage)
-						fmt.Println(w, message.Text)
-					}
-
-				}
+	events, err := bot.ParseRequest(r)
+	panicError(err)
+	//fmt.Println(w, "hellow")
+	for _, event := range events {
+		if event.Type == linebot.EventTypeMessage {
+			switch event.Message.(type) {
+			case *linebot.TextMessage:
+				var message = event.Message.(*linebot.TextMessage)
+				fmt.Println(w, message.Text)
 			}
-	*/
-	fmt.Fprintf(w, strconv.Itoa(c))
+
+		}
+	}
 }
 
 func GetStockInfo(responseBody *io.ReadCloser) {
