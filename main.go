@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/line/line-bot-sdk-go/linebot"
 
 	"gopkg.in/xmlpath.v2"
 )
@@ -31,7 +34,28 @@ func main() {
 	}
 
 	http.HandleFunc("/", MainPage)
-	http.HandleFunc("/line", LineWebHook)
+	http.HandleFunc("/line", func(w http.ResponseWriter, req *http.Request) {
+		bot, err := linebot.New(APISecret, channelAccessToken)
+		events, err := bot.ParseRequest(req)
+		if err != nil {
+			if err == linebot.ErrInvalidSignature {
+				w.WriteHeader(400)
+			} else {
+				w.WriteHeader(500)
+			}
+			return
+		}
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			}
+		}
+	})
 	http.ListenAndServe(portAsString, nil)
 
 }
