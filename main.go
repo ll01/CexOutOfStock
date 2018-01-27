@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/line/line-bot-sdk-go/linebot"
-
+	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/xmlpath.v2"
 )
 
