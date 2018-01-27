@@ -141,7 +141,7 @@ func OpenDatabase() *sql.DB {
 		db.Exec(string(schema))
 
 	} else {
-		db, err = sql.Open("sqllite", databaseName)
+		db, err = sql.Open("sqlite3", databaseName)
 		panicError(err)
 	}
 
