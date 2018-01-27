@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	databaseName = "database"
+	databaseName = "./database.db"
 )
 
 var isInStock = false
