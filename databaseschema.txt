@@ -1,0 +1,13 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    userid TEXT
+);
+
+CREATE TABLE product (
+    id INTEGER PRIMARY KEY,
+    userid TEXT,
+    url TEXT,
+    lastupdated DATETIME,
+    FOREIGN KEY (userid) REFERENCES user(userid)
+);
+

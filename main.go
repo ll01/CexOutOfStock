@@ -1,32 +1,39 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/line/line-bot-sdk-go/linebot"
 
 	"gopkg.in/xmlpath.v2"
 )
 
+const (
+	databaseName = "database"
+)
+
 var isInStock = false
 var channelAccessToken string
-
 var APISecret string
+var database *sql.DB
 
 /*Need to figure out is it going to check forever and the rate at which it checks */
 func main() {
+
+	database = OpenDatabase()
 	// get api key and secret from io
 	channelAccessToken = os.Getenv("channel")
 	if channelAccessToken == "" {
 		//log.Fatal("API key not given ")
 	}
 	APISecret = os.Getenv("secret")
-	portAsString := ":" + os.Getenv("PORT")
 
 	if APISecret == "" {
 		//log.Fatal("API secret not given")
@@ -34,7 +41,8 @@ func main() {
 
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
-	http.ListenAndServe(portAsString, nil)
+	var portNumber = GetPort()
+	http.ListenAndServe(portNumber, nil)
 
 }
 
@@ -50,29 +58,54 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	panicError(err)
 
 	events, err := bot.ParseRequest(r)
-	if err != nil {
-		if err == linebot.ErrInvalidSignature {
-			w.WriteHeader(400)
-		} else {
-			w.WriteHeader(500)
-		}
-		return
-	}
+	panicError(err)
 	//fmt.Println(w, "hellow")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
 			switch message := event.Message.(type) {
 			case *linebot.TextMessage:
-				if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
-					log.Print(err)
-				}
+				var replyToken = event.ReplyToken
+				var targetsID = event.Source.UserID
+				InsertEntryIntoDatabase(message.Text, replyToken, targetsID, bot)
 			}
 
 		}
 	}
 }
 
-func GetStockInfo(responseBody *io.ReadCloser) {
+func InsertEntryIntoDatabase(URLOfProductPage, replyToken, ID string, bot *linebot.Client) {
+	isInStock, isValidProductPage := GetStockInfoFromUrl(URLOfProductPage)
+	var messageToOutput = ""
+	if isValidProductPage == true {
+		if isInStock == false {
+			database.Exec("INSERT OR IGNORE INTO users (userid) VALUES({0})", ID)
+			database.Exec("INSERT OR IGNORE INTO products(userid,url,lastupdated)"+
+				"VALUES({0}, {1}, {2})", ID, URLOfProductPage, time.Now().UTC())
+			messageToOutput = "sorry not in stock but will alert you when it is :)"
+		}
+		messageToOutput = "This product is in stock"
+	} else {
+		messageToOutput = "Sorry this isn't a valid CEX product page"
+	}
+
+	bot.ReplyMessage(replyToken, linebot.NewTextMessage(messageToOutput))
+}
+
+func SendProductUpdates() {
+
+}
+
+func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
+	responce, err := http.Get(url)
+	if err != nil {
+		fmt.Println("invalid URL {0} serched ", url)
+	}
+	defer responce.Body.Close()
+	isInStock, isValidProductPage = GetStockInfofFromReqestBody(&responce.Body)
+	return isInStock, isValidProductPage
+}
+
+func GetStockInfofFromReqestBody(responseBody *io.ReadCloser) (isInStock, isValidProductPage bool) {
 	root, err := xmlpath.ParseHTML(*responseBody)
 	panicError(err)
 	xpath := xmlpath.MustCompile("//div[@class = \"buyNowButton\"]")
@@ -82,15 +115,51 @@ func GetStockInfo(responseBody *io.ReadCloser) {
 		fmt.Println(stockString)
 		switch stockString {
 		case "out of stock":
-			fmt.Println("sorry :(")
+			isInStock = false
+			isValidProductPage = true
 		case "i want to buy this item":
-			fmt.Println("yay in stock")
-			// email user
+			isInStock = true
+			isValidProductPage = true
 		default:
+			isValidProductPage = false
 			fmt.Println("invalid url inputed ")
 
 		}
 	}
+	return isInStock, isValidProductPage
+}
+
+func OpenDatabase() *sql.DB {
+	var db *sql.DB
+	if _, err := os.Stat(databaseName); os.IsNotExist(err) {
+		os.Create(databaseName)
+		db, err = sql.Open("sqllite", databaseName)
+		panicError(err)
+		var schema, err = ioutil.ReadFile("./databaseschema.txt")
+		panicError(err)
+
+		db.Exec(string(schema))
+
+	} else {
+		db, err = sql.Open("sqllite", databaseName)
+		panicError(err)
+	}
+
+	return db
+
+}
+
+func GetPort() string {
+	var output = ""
+	var defaultPortNumber = "8000"
+	portAsString := os.Getenv("PORT")
+	if portAsString == "" {
+		fmt.Println("port enviroment variable not set setting server to listen to port {0}", defaultPortNumber)
+		output = defaultPortNumber
+	} else {
+		output = portAsString
+	}
+	return ":" + output
 }
 
 func panicError(err error) {
