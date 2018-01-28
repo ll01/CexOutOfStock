@@ -85,7 +85,7 @@ func InsertEntryIntoDatabase(URLOfProductPage, replyToken, ID string, bot *lineb
 		}
 		messageToOutput = "This product is in stock"
 	} else {
-		messageToOutput = "Sorry this isn't a valid CEX product page"
+		messageToOutput = "Sorry this isn't a valid CEX product page."
 	}
 
 	bot.ReplyMessage(replyToken, linebot.NewTextMessage(messageToOutput))
