@@ -85,7 +85,7 @@ func InsertEntryIntoDatabase(URLOfProductPage, replyToken, ID string, bot *lineb
 		}
 		messageToOutput = "This product is in stock"
 	} else {
-		messageToOutput = "Sorry this isn't a valid CEX product page"
+		messageToOutput = "Sorry this isn't a valid CEX product page."
 	}
 
 	bot.ReplyMessage(replyToken, linebot.NewTextMessage(messageToOutput))
@@ -133,7 +133,7 @@ func OpenDatabase() *sql.DB {
 	var db *sql.DB
 	if _, err := os.Stat(databaseName); os.IsNotExist(err) {
 		os.Create(databaseName)
-		db, err = sql.Open("sqllite", databaseName)
+		db, err = sql.Open("sqlite3", databaseName)
 		panicError(err)
 		var schema, err = ioutil.ReadFile("./databaseschema.txt")
 		panicError(err)
