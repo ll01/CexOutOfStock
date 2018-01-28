@@ -133,7 +133,7 @@ func OpenDatabase() *sql.DB {
 	var db *sql.DB
 	if _, err := os.Stat(databaseName); os.IsNotExist(err) {
 		os.Create(databaseName)
-		db, err = sql.Open("sqllite", databaseName)
+		db, err = sql.Open("sqlite3", databaseName)
 		panicError(err)
 		var schema, err = ioutil.ReadFile("./databaseschema.txt")
 		panicError(err)
