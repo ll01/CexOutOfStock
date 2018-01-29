@@ -24,6 +24,13 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+<<<<<<< HEAD
 
+=======
+### project files that can't be open Source ###
+*.db
+*.db-journal
+settings.json
+>>>>>>> 7fd58a9ea0e81c772de94f7f69360e6ba9666f70
 
 # End of https://www.gitignore.io/api/go,visualstudiocode

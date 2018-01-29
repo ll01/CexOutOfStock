@@ -1,0 +1,15 @@
+insert into users(userid) values("ll01");
+insert into products (userid, url, lastupdated)
+values("ll01","hello from the future ", '2020-11-10 23:00:00');
+
+
+insert into products (userid, url, lastupdated)
+values("ll01","hello from the past ", '2009-11-10 23:00:00');
+
+select * from products;
+
+
+Select * from users left join products on
+products.userid= users.userid
+where
+ lastupdated > date('now')
