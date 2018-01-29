@@ -1,22 +1,6 @@
 package main
 
 import (
-<<<<<<< HEAD
-	"fmt"
-	"io"
-	"net/http"
-)
-
-func hello(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "Hello world!")
-}
-
-func main() {
-	fmt.Println("running")
-	http.HandleFunc("/", hello)
-	http.ListenAndServe(":8000", nil)
-}
-=======
 	"database/sql"
 	"fmt"
 	"io"
@@ -218,4 +202,4 @@ func panicError(err error) {
 		panic(err)
 	}
 }
->>>>>>> 7fd58a9ea0e81c772de94f7f69360e6ba9666f70
+
