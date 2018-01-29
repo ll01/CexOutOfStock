@@ -50,16 +50,19 @@ func TestProductInStock(t *testing.T) {
 
 func TestProuctOutOfStock(t *testing.T) {
 	DeleteTestRecords()
-	var TestURL = "https://uk.webuy.com/phones/product.php?mastersku=SAPPI8P64GGR&sku=SAPPI8P64GGRUNLB#.Wm675jfLdPY"
+	var TestURL = "https://uk.webuy.com/product.php?sku=SMEM16G21331#.Wm95oDfLdPY"
 	var TestID = "TestID"
 	database = OpenDatabase()
 	defer database.Close()
 
 	var output = InsertEntryIntoDatabase(TestURL, TestID)
-	rows, err := database.Query("SELECT userid FROM products where url = \"%v\"", TestURL)
+	prep, err := database.Prepare("SELECT userid FROM products where url = ?")
+	panicError(err)
+	defer prep.Close()
+	rows, err := prep.Query(TestURL)
 	panicError(err)
 	if output != "sorry not in stock but will alert you when it is :)" {
-		t.Error("this url should be inserted %v ", TestURL)
+		t.Error("this url should be inserted %v", TestURL)
 	}
 	if rows.Next() {
 		var username = ""
@@ -71,7 +74,6 @@ func TestProuctOutOfStock(t *testing.T) {
 		t.Error("this url should be inserted %v ", TestURL)
 	}
 }
-
 
 func DeleteTestRecords() {
 	database = OpenDatabase()

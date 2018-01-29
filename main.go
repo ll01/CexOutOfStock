@@ -43,6 +43,7 @@ var database *sql.DB
 
 /*Need to figure out is it going to check forever and the rate at which it checks */
 func main() {
+
 	RunServer()
 }
 
@@ -92,9 +93,17 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 	var messageToOutput = ""
 	if isValidProductPage == true {
 		if isInStock == false {
-			database.Exec("INSERT OR IGNORE INTO users (userid) VALUES(\"%v\")", ID)
-			database.Exec("INSERT OR IGNORE INTO products(userid,url,lastupdated)"+
-				" VALUES(\"%v\", \"%v\", %v)", ID, URLOfProductPage, time.Now().UTC().Format(sqliteFormat))
+
+			var prep, err = database.Prepare("INSERT OR IGNORE INTO users (userid) VALUES(?)")
+			defer prep.Close()
+			panicError(err)
+			prep.Exec(ID)
+
+			prep, err = database.Prepare("INSERT OR IGNORE INTO products(userid,url,lastupdated) VALUES(?, ?, ?)")
+			defer prep.Close()
+			panicError(err)
+			prep.Exec(ID, URLOfProductPage, time.Now().UTC().Format(sqliteFormat))
+
 			messageToOutput = "sorry not in stock but will alert you when it is :)"
 		} else {
 			messageToOutput = "This product is in stock"
@@ -120,7 +129,8 @@ func startUpdatePolling() {
 
 func SendProductUpdates(bot *linebot.Client) {
 	var currentTime = time.Now().UTC().Format(sqliteFormat)
-	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('%v', '-7 days')  ", currentTime)
+	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('" + currentTime +
+		"', '-7 days')  ")
 	panicError(err)
 	for rows.Next() {
 		var userID = ""
@@ -141,7 +151,7 @@ func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
 	} else {
 		isInStock = false
 		isValidProductPage = false
-		fmt.Println("invalid URL {0} serched ", url)
+		fmt.Println("invalid URL %v serched ", url)
 	}
 	return isInStock, isValidProductPage
 }
@@ -149,11 +159,11 @@ func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
 func GetStockInfofFromReqestBody(responseBody *io.ReadCloser) (isInStock, isValidProductPage bool) {
 	root, err := xmlpath.ParseHTML(*responseBody)
 	panicError(err)
+	fmt.Println(root.String())
 	xpath := xmlpath.MustCompile("//div[@class = \"buyNowButton\"]")
 	if stockString, ok := xpath.String(root); ok {
 		stockString = strings.TrimSpace(stockString)
 		stockString = strings.ToLower(stockString)
-		fmt.Println(stockString)
 		switch stockString {
 		case "out of stock":
 			isInStock = false
