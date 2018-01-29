@@ -3,7 +3,7 @@ CREATE TABLE users (
     userid TEXT
 );
 
-CREATE TABLE product (
+CREATE TABLE products (
     id INTEGER PRIMARY KEY,
     userid TEXT,
     url TEXT,

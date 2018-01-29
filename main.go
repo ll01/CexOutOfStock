@@ -16,34 +16,29 @@ import (
 )
 
 const (
-	databaseName = "./database.db"
+	databaseName     = "./database.db"
+	settingsFilePath = "./settings.json"
+	OneWeekInHours   = 168
+	sqliteFormat     = "2006-01-02 15:04:05"
 )
 
 var isInStock = false
-var channelAccessToken string
-var APISecret string
 var database *sql.DB
 
 /*Need to figure out is it going to check forever and the rate at which it checks */
 func main() {
+	RunServer()
+}
 
+func RunServer() {
 	database = OpenDatabase()
-	// get api key and secret from io
-	channelAccessToken = os.Getenv("channel")
-	if channelAccessToken == "" {
-		//log.Fatal("API key not given ")
-	}
-	APISecret = os.Getenv("secret")
-
-	if APISecret == "" {
-		//log.Fatal("API secret not given")
-	}
-
+	defer database.Close()
+	GetLineMessagingSettings()
+	go startUpdatePolling()
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
 	var portNumber = GetPort()
 	http.ListenAndServe(portNumber, nil)
-
 }
 
 //MainPage fuction for http response
@@ -54,54 +49,84 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 //LineWebHook fuction for http response
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
 
-	bot, err := linebot.New(APISecret, channelAccessToken)
-	panicError(err)
-
+	var bot = GetLineMessagingSettings().bot
 	events, err := bot.ParseRequest(r)
 	panicError(err)
-	//fmt.Println(w, "hellow")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
 			switch message := event.Message.(type) {
 			case *linebot.TextMessage:
 				var replyToken = event.ReplyToken
 				var targetsID = event.Source.UserID
-				InsertEntryIntoDatabase(message.Text, replyToken, targetsID, bot)
+				messageToSendToUser := InsertEntryIntoDatabase(message.Text, targetsID)
+				SendRepy(replyToken, messageToSendToUser, bot)
 			}
 
 		}
 	}
 }
 
-func InsertEntryIntoDatabase(URLOfProductPage, replyToken, ID string, bot *linebot.Client) {
+func SendRepy(replyToken, message string, bot *linebot.Client) {
+	_, err := bot.ReplyMessage(replyToken, linebot.NewTextMessage(message)).Do()
+	panicError(err)
+}
+
+func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 	isInStock, isValidProductPage := GetStockInfoFromUrl(URLOfProductPage)
 	var messageToOutput = ""
 	if isValidProductPage == true {
 		if isInStock == false {
-			database.Exec("INSERT OR IGNORE INTO users (userid) VALUES({0})", ID)
+			database.Exec("INSERT OR IGNORE INTO users (userid) VALUES(\"%v\")", ID)
 			database.Exec("INSERT OR IGNORE INTO products(userid,url,lastupdated)"+
-				"VALUES({0}, {1}, {2})", ID, URLOfProductPage, time.Now().UTC())
+				" VALUES(\"%v\", \"%v\", %v)", ID, URLOfProductPage, time.Now().UTC().Format(sqliteFormat))
 			messageToOutput = "sorry not in stock but will alert you when it is :)"
+		} else {
+			messageToOutput = "This product is in stock"
 		}
-		messageToOutput = "This product is in stock"
+
 	} else {
 		messageToOutput = "Sorry this isn't a valid CEX product page."
 	}
-
-	bot.ReplyMessage(replyToken, linebot.NewTextMessage(messageToOutput))
+	return messageToOutput
 }
 
-func SendProductUpdates() {
+func SendPushNotification(UserID, messageToSend string, bot *linebot.Client) {
+	_, err := bot.PushMessage(UserID, linebot.NewTextMessage(messageToSend)).Do()
+	panicError(err)
+}
+
+func startUpdatePolling() {
+	for {
+		time.Sleep(OneWeekInHours * time.Hour)
+		SendProductUpdates(GetLineMessagingSettings().bot)
+	}
+}
+
+func SendProductUpdates(bot *linebot.Client) {
+	var currentTime = time.Now().UTC().Format(sqliteFormat)
+	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('%v', '-7 days')  ", currentTime)
+	panicError(err)
+	for rows.Next() {
+		var userID = ""
+		var productURL = ""
+
+		rows.Scan(&userID, &productURL)
+		SendPushNotification(userID, productURL, bot)
+	}
 
 }
 
 func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
 	responce, err := http.Get(url)
-	if err != nil {
+	if err == nil {
+		defer responce.Body.Close()
+		isInStock, isValidProductPage = GetStockInfofFromReqestBody(&responce.Body)
+
+	} else {
+		isInStock = false
+		isValidProductPage = false
 		fmt.Println("invalid URL {0} serched ", url)
 	}
-	defer responce.Body.Close()
-	isInStock, isValidProductPage = GetStockInfofFromReqestBody(&responce.Body)
 	return isInStock, isValidProductPage
 }
 
