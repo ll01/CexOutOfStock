@@ -70,11 +70,15 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w, "This page is the line hook")
 	}
+	w.Header().Set("Server", "A Go Web Server for line messaging")
+	w.WriteHeader(200)
 }
 
 func SendRepy(replyToken, message string, bot *linebot.Client) {
 	_, err := bot.ReplyMessage(replyToken, linebot.NewTextMessage(message)).Do()
-	panicError(err)
+	if err != nil {
+		fmt.Println("error sending reply. Token: %v ", replyToken)
+	}
 }
 
 func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {

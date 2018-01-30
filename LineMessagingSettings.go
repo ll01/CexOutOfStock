@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"sync"
 
@@ -22,7 +21,6 @@ func NewLineMessagingSetting(settingsFilePath string) *LineMessagingSettings {
 	var settings LineMessagingSettings
 	fileData, err := ioutil.ReadFile(settingsFilePath)
 	panicError(err)
-	fmt.Println(string(fileData))
 	err = json.Unmarshal(fileData, &settings)
 	panicError(err)
 	settings.bot, err = linebot.New(settings.APISecret, settings.ChannelAccessToken)
