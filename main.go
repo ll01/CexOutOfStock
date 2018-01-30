@@ -18,8 +18,9 @@ import (
 const (
 	databaseName     = "./database.db"
 	settingsFilePath = "./settings.json"
-	OneWeekInHours   = 168
-	sqliteFormat     = "2006-01-02 15:04:05"
+	//OneWeekInHours Hours there are in a week
+	OneWeekInHours = 168
+	sqliteFormat   = "2006-01-02 15:04:05"
 )
 
 var isInStock = false
@@ -31,6 +32,7 @@ func main() {
 	RunServer()
 }
 
+//RunServer opens the database and configures all server settings
 func RunServer() {
 	database = OpenDatabase()
 	defer database.Close()
@@ -47,7 +49,7 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
 }
 
-//LineWebHook fuction for http response
+//LineWebHook fuction for http response main function for communicating with the line api
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
 
 	var bot = GetLineMessagingSettings().bot
