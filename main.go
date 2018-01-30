@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -41,7 +42,7 @@ func RunServer() {
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
 	var portNumber = GetPort()
-	http.ListenAndServe(portNumber, nil)
+	log.Fatal(http.ListenAndServe(portNumber, nil))
 }
 
 //MainPage fuction for http response
