@@ -54,18 +54,21 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 
 	var bot = GetLineMessagingSettings().bot
 	events, err := bot.ParseRequest(r)
-	panicError(err)
-	for _, event := range events {
-		if event.Type == linebot.EventTypeMessage {
-			switch message := event.Message.(type) {
-			case *linebot.TextMessage:
-				var replyToken = event.ReplyToken
-				var targetsID = event.Source.UserID
-				messageToSendToUser := InsertEntryIntoDatabase(message.Text, targetsID)
-				SendRepy(replyToken, messageToSendToUser, bot)
-			}
+	if err == nil {
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					var replyToken = event.ReplyToken
+					var targetsID = event.Source.UserID
+					messageToSendToUser := InsertEntryIntoDatabase(message.Text, targetsID)
+					SendRepy(replyToken, messageToSendToUser, bot)
+				}
 
+			}
 		}
+	} else {
+		fmt.Fprintf(w, "This page is the line hook")
 	}
 }
 
