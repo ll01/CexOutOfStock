@@ -117,23 +117,47 @@ func SendPushNotification(UserID, messageToSend string, bot *linebot.Client) {
 func startUpdatePolling() {
 	for {
 		time.Sleep(OneWeekInHours * time.Hour)
-		SendProductUpdates(GetLineMessagingSettings().bot)
+		var bot = GetLineMessagingSettings().bot
+		var productsToUpdate = GetProductsToUpdate()
+		SendPushNotificationToMultipleUsers(productsToUpdate, bot)
 	}
 }
 
-func SendProductUpdates(bot *linebot.Client) {
-	var currentTime = time.Now().UTC().Format(sqliteFormat)
-	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('" + currentTime +
-		"', '-7 days')  ")
+func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
+	for userid, productURL := range productData {
+		isInStock, _ := GetStockInfoFromUrl(productURL)
+		if isInStock == true {
+			go SendPushNotification(userid, "item "+productURL+" is in stock", bot)
+		} else {
+			prep, err := database.Prepare("UPDATE users SET lastupdated = date('now') WHERE" +
+				"userid = ?")
+			defer prep.Close()
+			panicError(err)
+			prep.Exec(userid)
+			
+		}
+	}
+}
+
+func GetProductsToUpdate() map[string]string {
+	var productData = make(map[string]string)
+	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('now', '-7 days')  ")
 	panicError(err)
 	for rows.Next() {
 		var userID = ""
 		var productURL = ""
 
 		rows.Scan(&userID, &productURL)
-		SendPushNotification(userID, productURL, bot)
-	}
+		productData[userID] = productURL
 
+	}
+	return productData
+}
+
+func SendPushNotificationToMultipleUsers(messageData map[string]string, bot *linebot.Client) {
+	for userid, message := range messageData {
+		go SendPushNotification(userid, message, bot)
+	}
 }
 
 func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
