@@ -128,12 +128,16 @@ func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 		isInStock, _ := GetStockInfoFromUrl(productURL)
 		if isInStock == true {
 			go SendPushNotification(userid, "item "+productURL+" is in stock", bot)
+			prep,err := database.Prepare("DELETE FROM products WHERE userid =? AND url = ?")
+			defer prep.Close();
+			panicError(err)
+			prep.Exec(userid,productURL)
 		} else {
-			prep, err := database.Prepare("UPDATE users SET lastupdated = date('now') WHERE" +
-				"userid = ?")
+			prep, err := database.Prepare("UPDATE products SET lastupdated = date('now') WHERE" +
+				"userid = ? AND url = ?")
 			defer prep.Close()
 			panicError(err)
-			prep.Exec(userid)
+			prep.Exec(userid,productURL)
 			
 		}
 	}
