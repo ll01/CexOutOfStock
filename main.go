@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,7 +43,8 @@ func RunServer() {
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
 	log.Fatal(http.ListenAndServeTLS(
-		":"+settings.Port, settings.CertFile, settings.KeyFile, nil))
+		":"+strconv.Itoa(settings.Port),
+		settings.CertFile, settings.KeyFile, nil))
 
 }
 

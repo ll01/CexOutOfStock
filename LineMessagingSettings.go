@@ -14,7 +14,7 @@ var settingsOnce sync.Once
 type LineMessagingSettings struct {
 	APISecret          string `json:"APISecret"`
 	ChannelAccessToken string `json:"channelAccessToken"`
-	Port               string `json:"port"`
+	Port               int    `json:"port"`
 	CertFile           string `json:"certFile"`
 	KeyFile            string `json:"keyFile"`
 	bot                *linebot.Client
