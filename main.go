@@ -37,12 +37,13 @@ func main() {
 func RunServer() {
 	database = OpenDatabase()
 	defer database.Close()
-	GetLineMessagingSettings()
+	var settings = GetLineMessagingSettings()
 	go startUpdatePolling()
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
-	var portNumber = GetPort()
-	log.Fatal(http.ListenAndServe(portNumber, nil))
+	log.Fatal(http.ListenAndServeTLS(
+		":"+settings.Port, settings.CertFile, settings.KeyFile, nil))
+
 }
 
 //MainPage fuction for http response
@@ -128,17 +129,17 @@ func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 		isInStock, _ := GetStockInfoFromUrl(productURL)
 		if isInStock == true {
 			go SendPushNotification(userid, "item "+productURL+" is in stock", bot)
-			prep,err := database.Prepare("DELETE FROM products WHERE userid =? AND url = ?")
-			defer prep.Close();
+			prep, err := database.Prepare("DELETE FROM products WHERE userid =? AND url = ?")
+			defer prep.Close()
 			panicError(err)
-			prep.Exec(userid,productURL)
+			prep.Exec(userid, productURL)
 		} else {
 			prep, err := database.Prepare("UPDATE products SET lastupdated = date('now') WHERE" +
 				"userid = ? AND url = ?")
 			defer prep.Close()
 			panicError(err)
-			prep.Exec(userid,productURL)
-			
+			prep.Exec(userid, productURL)
+
 		}
 	}
 }
@@ -222,18 +223,27 @@ func OpenDatabase() *sql.DB {
 
 }
 
-func GetPort() string {
-	var output = ""
-	var defaultPortNumber = "8000"
-	portAsString := os.Getenv("PORT")
-	if portAsString == "" {
-		fmt.Println("port enviroment variable not set setting server to listen to port {0}", defaultPortNumber)
-		output = defaultPortNumber
-	} else {
-		output = portAsString
-	}
-	return ":" + output
-}
+// func GetPort() string {
+// 	var output = ""
+// 	var defaultPortNumber = "8000"
+// 	portAsString := os.Getenv("CEXBOTPORT")
+// 	if portAsString == "" {
+// 		fmt.Println("port enviroment variable not set setting server to listen to port {0}", defaultPortNumber)
+// 		output = defaultPortNumber
+// 	} else {
+// 		output = portAsString
+// 	}
+// 	return ":" + output
+// }
+
+// func getSSLkeys() (certFile, keyFile string) {
+// 	certFile = strings.TrimSpace(os.Getenv("certFile"))
+// 	keyFile = strings.TrimSpace(os.Getenv("KeyFile"))
+// 	if certFile == "" || keyFile == "" {
+// 		log.Fatal("no ssl key or certificat given")
+// 	}
+// 	return certFile, keyFile
+// }
 
 func panicError(err error) {
 	if err != nil {

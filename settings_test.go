@@ -5,7 +5,7 @@ import (
 )
 
 func TestLoadingSettings(t *testing.T) {
-	var testSettings = NewLineMessagingSetting("./examplesettings.json")
+	var testSettings = Settings("./examplesettings.json")
 
 	if testSettings.APISecret != "<your-API-secret>" {
 		t.Errorf("API Secret not beeing read in properly should be 1 is actualy {0}", testSettings.APISecret)

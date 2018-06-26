@@ -14,10 +14,13 @@ var settingsOnce sync.Once
 type LineMessagingSettings struct {
 	APISecret          string `json:"APISecret"`
 	ChannelAccessToken string `json:"channelAccessToken"`
+	Port               string `json:"port"`
+	CertFile           string `json:"certFile"`
+	KeyFile            string `json:"keyFile"`
 	bot                *linebot.Client
 }
 
-func NewLineMessagingSetting(settingsFilePath string) *LineMessagingSettings {
+func Settings(settingsFilePath string) *LineMessagingSettings {
 	var settings LineMessagingSettings
 	fileData, err := ioutil.ReadFile(settingsFilePath)
 	panicError(err)
@@ -30,7 +33,7 @@ func NewLineMessagingSetting(settingsFilePath string) *LineMessagingSettings {
 
 func GetLineMessagingSettings() *LineMessagingSettings {
 	settingsOnce.Do(func() {
-		messagingSettings = NewLineMessagingSetting(settingsFilePath)
+		messagingSettings = Settings(settingsFilePath)
 	})
 	return messagingSettings
 }

@@ -77,7 +77,7 @@ func TestProuctOutOfStock(t *testing.T) {
 
 func TestNotificationOfItemBackInStock(t *testing.T) {
 	var TestURL = "https://uk.webuy.com/product.php?sku=SMEM16G21331#.Wm95oDfLdPY"
-	var dataMap map[string]string  := make(map[string]string)
+	// dataMap  := make(map[string]string)
 	DeleteTestRecords()
 	database = OpenDatabase()
 	defer database.Close()
@@ -90,14 +90,14 @@ func TestNotificationOfItemBackInStock(t *testing.T) {
 	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('now', '-7 days')  ")
 	panicError(err)
 	for rows.Next() {
-		dataMap[]
+		//  dataMap[]
 	}
 	
 
 }
 
 func DeleteTestRecords() {
-	database = OpenDatabase()
+	 database = OpenDatabase()
 	defer database.Close()
 
 	database.Exec("Delete from users where userid = TestID")
