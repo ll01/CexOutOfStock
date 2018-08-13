@@ -148,7 +148,7 @@ func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 
 func GetProductsToUpdate() map[string]string {
 	var productData = make(map[string]string)
-	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('now', '-7 days')  ")
+	rows, err := database.Query("Select * from users left join products on products.userid=users.userid where lastupdated < date('now', '-7 days')  ")
 	panicError(err)
 	for rows.Next() {
 		var userID = ""

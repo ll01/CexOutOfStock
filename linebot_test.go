@@ -35,7 +35,7 @@ func TestRejectUsersProductNotValidURL(t *testing.T) {
 
 func TestProductInStock(t *testing.T) {
 	DeleteTestRecords()
-	var TestURL = "https://uk.webuy.com/phones/product.php?mastersku=SAPPI8P64GGR&sku=SAPPI8P64GGRUNLB#.Wm675jfLdPY"
+	var TestURL = "https://uk.webuy.com/product-detail?id=smem9qaeb&categoryName=memory---desktop-ddr3&superCatName=computing&title=8-gb-pc12800-ddr3-1600mhz-240-pin-memory"
 	var TestID = "TestID"
 	database = OpenDatabase()
 	defer database.Close()
@@ -50,7 +50,7 @@ func TestProductInStock(t *testing.T) {
 
 func TestProuctOutOfStock(t *testing.T) {
 	DeleteTestRecords()
-	var TestURL = "https://uk.webuy.com/product.php?sku=SMEM16G21331#.Wm95oDfLdPY"
+	var TestURL = "https://uk.webuy.com/product-detail?id=sgranvigtx650ti1gb&categoryName=graphics-cards-pci-e&superCatName=computing&title=nvidia-geforce-gtx-650-ti-1gb-dx11"
 	var TestID = "TestID"
 	database = OpenDatabase()
 	defer database.Close()
