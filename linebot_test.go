@@ -10,7 +10,7 @@ func TestOpeningDatabase(t *testing.T) {
 	database = OpenDatabase()
 	defer database.Close()
 	if _, err := os.Stat(databaseName); os.IsNotExist(err) == true {
-		t.Error("database file is not created at %v", databaseName)
+		t.Errorf("database file is not created at %v", databaseName)
 	}
 }
 
@@ -30,7 +30,7 @@ func TestRejectUsersProductNotValidURL(t *testing.T) {
 	var output = InsertEntryIntoDatabase(TestURL, TestID)
 
 	if output != "Sorry this isn't a valid CEX product page." {
-		t.Error("this url should be rejected ", TestURL)
+		t.Errorf("this url should be rejected %s", TestURL)
 	}
 }
 
@@ -45,7 +45,7 @@ func TestProductInStock(t *testing.T) {
 	rows, err := database.Query("SELECT userid FROM products where url = \"%v\"", TestURL)
 	crash.PanicError(err)
 	if output != "This product is in stock" && rows.Next() == true {
-		t.Error("this url should be rejected ", TestURL)
+		t.Errorf("this url should be rejected %s", TestURL)
 	}
 }
 
@@ -63,16 +63,16 @@ func TestProuctOutOfStock(t *testing.T) {
 	rows, err := prep.Query(TestURL)
 	crash.PanicError(err)
 	if output != "sorry not in stock but will alert you when it is :)" {
-		t.Error("this url should be inserted %v", TestURL)
+		t.Errorf("this url should be inserted %v", TestURL)
 	}
 	if rows.Next() {
 		var username = ""
 		rows.Scan(&username)
 		if username != TestID {
-			t.Error("this url should be inserted %v ", TestURL)
+			t.Errorf("this url should be inserted %v ", TestURL)
 		}
 	} else {
-		t.Error("this url should be inserted %v ", TestURL)
+		t.Errorf("this url should be inserted %v ", TestURL)
 	}
 }
 

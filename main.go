@@ -5,7 +5,6 @@ import (
 	"CexOutOfStock/crash"
 	"database/sql"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
+	"github.com/headzoo/surf/browser"
 	"github.com/line/line-bot-sdk-go/linebot"
 	_ "github.com/mattn/go-sqlite3"
-	"gopkg.in/xmlpath.v2"
+	"gopkg.in/headzoo/surf.v1"
 )
 
 const (
@@ -84,7 +85,7 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 func SendRepy(replyToken, message string, bot *linebot.Client) {
 	_, err := bot.ReplyMessage(replyToken, linebot.NewTextMessage(message)).Do()
 	if err != nil {
-		fmt.Println("error sending reply. Token: %v ", replyToken)
+		fmt.Printf("error sending reply. Token: %v\n", replyToken)
 	}
 }
 
@@ -171,27 +172,30 @@ func SendPushNotificationToMultipleUsers(messageData map[string]string, bot *lin
 }
 
 func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
-	responce, err := http.Get(url)
+	bow := surf.NewBrowser()
+	// https://github.com/chromedp/examples/blob/master/text/main.go
+	err := bow.Open(url)
 	if err == nil {
-		defer responce.Body.Close()
-		isInStock, isValidProductPage = GetStockInfofFromReqestBody(&responce.Body)
+		isInStock, isValidProductPage = GetStockInfofFromReqestBody(bow)
 
 	} else {
 		isInStock = false
 		isValidProductPage = false
-		fmt.Println("invalid URL %v serched ", url)
+		fmt.Printf("invalid URL %v serched\n", url)
 	}
 	return isInStock, isValidProductPage
 }
 
-func GetStockInfofFromReqestBody(responseBody *io.ReadCloser) (isInStock, isValidProductPage bool) {
-	root, err := xmlpath.ParseHTML(*responseBody)
-	crash.PanicError(err)
-	fmt.Println(root.String())
-	xpath := xmlpath.MustCompile("//div[@class = \"buyNowButton\"]")
-	if stockString, ok := xpath.String(root); ok {
+func GetStockInfofFromReqestBody(bow *browser.Browser) (isInStock, isValidProductPage bool) {
+	result := bow.Find("div.onlyBuyNowButton")
+	result.Each(func(_ int, s *goquery.Selection) {
+		fmt.Println(s.Text())
+	})
+	if stockString := result.Text(); stockString != "" {
 		stockString = strings.TrimSpace(stockString)
+		fmt.Println(stockString)
 		stockString = strings.ToLower(stockString)
+
 		switch stockString {
 		case "out of stock":
 			isInStock = false
