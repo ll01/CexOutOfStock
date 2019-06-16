@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CexOutOfStock/crash"
 	"os"
 	"testing"
 )
@@ -42,7 +43,7 @@ func TestProductInStock(t *testing.T) {
 
 	var output = InsertEntryIntoDatabase(TestURL, TestID)
 	rows, err := database.Query("SELECT userid FROM products where url = \"%v\"", TestURL)
-	panicError(err)
+	crash.PanicError(err)
 	if output != "This product is in stock" && rows.Next() == true {
 		t.Error("this url should be rejected ", TestURL)
 	}
@@ -57,10 +58,10 @@ func TestProuctOutOfStock(t *testing.T) {
 
 	var output = InsertEntryIntoDatabase(TestURL, TestID)
 	prep, err := database.Prepare("SELECT userid FROM products where url = ?")
-	panicError(err)
+	crash.PanicError(err)
 	defer prep.Close()
 	rows, err := prep.Query(TestURL)
-	panicError(err)
+	crash.PanicError(err)
 	if output != "sorry not in stock but will alert you when it is :)" {
 		t.Error("this url should be inserted %v", TestURL)
 	}
@@ -82,22 +83,21 @@ func TestNotificationOfItemBackInStock(t *testing.T) {
 	database = OpenDatabase()
 	defer database.Close()
 	_, err := database.Exec("INSERT INTO users(userid) values TestID")
-	panicError(err)
+	crash.PanicError(err)
 	_, err = database.Exec("INSERT INTO products(userid, url,lastupdated)" +
 		"VALUES(TestID," + TestURL + ",date('now', '-1 month')")
-	panicError(err)
+	crash.PanicError(err)
 
 	rows, err := database.Query("Select * from users left join products on products.userid=users.userid wherelastupdated < date('now', '-7 days')  ")
-	panicError(err)
+	crash.PanicError(err)
 	for rows.Next() {
 		//  dataMap[]
 	}
-	
 
 }
 
 func DeleteTestRecords() {
-	 database = OpenDatabase()
+	database = OpenDatabase()
 	defer database.Close()
 
 	database.Exec("Delete from users where userid = TestID")

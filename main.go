@@ -1,6 +1,8 @@
 package main
 
 import (
+	"CexOutOfStock/LineMessagingSettings"
+	"CexOutOfStock/crash"
 	"database/sql"
 	"fmt"
 	"io"
@@ -38,13 +40,14 @@ func main() {
 func RunServer() {
 	database = OpenDatabase()
 	defer database.Close()
-	var settings = GetLineMessagingSettings()
+	var settings = LineMessagingSettings.GetLineMessagingSettings()
 	go startUpdatePolling()
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
-	log.Fatal(http.ListenAndServeTLS(
-		":"+strconv.Itoa(settings.Port),
-		settings.CertFile, settings.KeyFile, nil))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(settings.Port), nil))
+	// log.Fatal(http.ListenAndServeTLS(
+	// 	":"+strconv.Itoa(settings.Port),
+	// 	settings.CertFile, settings.KeyFile, nil))
 
 }
 
@@ -56,7 +59,7 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 //LineWebHook fuction for http response main function for communicating with the line api
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
 
-	var bot = GetLineMessagingSettings().bot
+	var bot = LineMessagingSettings.GetLineMessagingSettings().Bot
 	events, err := bot.ParseRequest(r)
 	if err == nil {
 		for _, event := range events {
@@ -93,12 +96,12 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 
 			var prep, err = database.Prepare("INSERT OR IGNORE INTO users (userid) VALUES(?)")
 			defer prep.Close()
-			panicError(err)
+			crash.PanicError(err)
 			prep.Exec(ID)
 
 			prep, err = database.Prepare("INSERT OR IGNORE INTO products(userid,url,lastupdated) VALUES(?, ?, ?)")
 			defer prep.Close()
-			panicError(err)
+			crash.PanicError(err)
 			prep.Exec(ID, URLOfProductPage, time.Now().UTC().Format(sqliteFormat))
 
 			messageToOutput = "sorry not in stock but will alert you when it is :)"
@@ -114,13 +117,13 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 
 func SendPushNotification(UserID, messageToSend string, bot *linebot.Client) {
 	_, err := bot.PushMessage(UserID, linebot.NewTextMessage(messageToSend)).Do()
-	panicError(err)
+	crash.PanicError(err)
 }
 
 func startUpdatePolling() {
 	for {
 		time.Sleep(OneWeekInHours * time.Hour)
-		var bot = GetLineMessagingSettings().bot
+		var bot = LineMessagingSettings.GetLineMessagingSettings().Bot
 		var productsToUpdate = GetProductsToUpdate()
 		SendPushNotificationToMultipleUsers(productsToUpdate, bot)
 	}
@@ -133,13 +136,13 @@ func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 			go SendPushNotification(userid, "item "+productURL+" is in stock", bot)
 			prep, err := database.Prepare("DELETE FROM products WHERE userid =? AND url = ?")
 			defer prep.Close()
-			panicError(err)
+			crash.PanicError(err)
 			prep.Exec(userid, productURL)
 		} else {
 			prep, err := database.Prepare("UPDATE products SET lastupdated = date('now') WHERE" +
 				"userid = ? AND url = ?")
 			defer prep.Close()
-			panicError(err)
+			crash.PanicError(err)
 			prep.Exec(userid, productURL)
 
 		}
@@ -149,7 +152,7 @@ func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 func GetProductsToUpdate() map[string]string {
 	var productData = make(map[string]string)
 	rows, err := database.Query("Select * from users left join products on products.userid=users.userid where lastupdated < date('now', '-7 days')  ")
-	panicError(err)
+	crash.PanicError(err)
 	for rows.Next() {
 		var userID = ""
 		var productURL = ""
@@ -183,7 +186,7 @@ func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
 
 func GetStockInfofFromReqestBody(responseBody *io.ReadCloser) (isInStock, isValidProductPage bool) {
 	root, err := xmlpath.ParseHTML(*responseBody)
-	panicError(err)
+	crash.PanicError(err)
 	fmt.Println(root.String())
 	xpath := xmlpath.MustCompile("//div[@class = \"buyNowButton\"]")
 	if stockString, ok := xpath.String(root); ok {
@@ -210,15 +213,15 @@ func OpenDatabase() *sql.DB {
 	if _, err := os.Stat(databaseName); os.IsNotExist(err) {
 		os.Create(databaseName)
 		db, err = sql.Open("sqlite3", databaseName)
-		panicError(err)
+		crash.PanicError(err)
 		var schema, err = ioutil.ReadFile("./databaseschema.txt")
-		panicError(err)
+		crash.PanicError(err)
 
 		db.Exec(string(schema))
 
 	} else {
 		db, err = sql.Open("sqlite3", databaseName)
-		panicError(err)
+		crash.PanicError(err)
 	}
 
 	return db
@@ -246,9 +249,3 @@ func OpenDatabase() *sql.DB {
 // 	}
 // 	return certFile, keyFile
 // }
-
-func panicError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
