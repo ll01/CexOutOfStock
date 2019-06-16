@@ -1,12 +1,20 @@
 {
 	"ImportPath": "CexOutOfStock",
 	"GoVersion": "go1.9",
-	"GodepVersion": "v79",
+	"GodepVersion": "v80",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/line/line-bot-sdk-go/linebot",
 			"Comment": "1.0.0-89-g5b4d15a",
 			"Rev": "5b4d15ac1b87fe2831ae06d92aeda735deed1206"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Comment": "v1.9.0-14-g593fde6",
+			"Rev": "593fde6929df5acf164ede346d6b0a98597ed9d2"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
