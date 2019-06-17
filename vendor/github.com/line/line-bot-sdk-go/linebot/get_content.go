@@ -15,9 +15,8 @@
 package linebot
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // GetMessageContent method
@@ -49,5 +48,6 @@ func (call *GetMessageContentCall) Do() (*MessageContentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToMessageContentResponse(res)
 }

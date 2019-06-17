@@ -15,9 +15,8 @@
 package linebot
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // GetProfile method
@@ -46,12 +45,10 @@ func (call *GetProfileCall) WithContext(ctx context.Context) *GetProfileCall {
 func (call *GetProfileCall) Do() (*UserProfileResponse, error) {
 	endpoint := fmt.Sprintf(APIEndpointGetProfile, call.userID)
 	res, err := call.c.get(call.ctx, endpoint, nil)
-	if res != nil && res.Body != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToUserProfileResponse(res)
 }
 
@@ -83,12 +80,10 @@ func (call *GetGroupMemberProfileCall) WithContext(ctx context.Context) *GetGrou
 func (call *GetGroupMemberProfileCall) Do() (*UserProfileResponse, error) {
 	endpoint := fmt.Sprintf(APIEndpointGetGroupMemberProfile, call.groupID, call.userID)
 	res, err := call.c.get(call.ctx, endpoint, nil)
-	if res != nil && res.Body != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToUserProfileResponse(res)
 }
 
@@ -120,11 +115,9 @@ func (call *GetRoomMemberProfileCall) WithContext(ctx context.Context) *GetRoomM
 func (call *GetRoomMemberProfileCall) Do() (*UserProfileResponse, error) {
 	endpoint := fmt.Sprintf(APIEndpointGetRoomMemberProfile, call.roomID, call.userID)
 	res, err := call.c.get(call.ctx, endpoint, nil)
-	if res != nil && res.Body != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToUserProfileResponse(res)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"CexOutOfStock/LineMessagingSettings"
 	"CexOutOfStock/crash"
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -13,11 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
-	"github.com/headzoo/surf/browser"
+	"github.com/chromedp/chromedp"
 	"github.com/line/line-bot-sdk-go/linebot"
 	_ "github.com/mattn/go-sqlite3"
-	"gopkg.in/headzoo/surf.v1"
 )
 
 const (
@@ -37,7 +36,7 @@ func main() {
 	RunServer()
 }
 
-//RunServer opens the database and configures all server settings
+//RunServer opens the database and configustockString all server settings
 func RunServer() {
 	database = OpenDatabase()
 	defer database.Close()
@@ -172,30 +171,38 @@ func SendPushNotificationToMultipleUsers(messageData map[string]string, bot *lin
 }
 
 func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
-	bow := surf.NewBrowser()
-	// https://github.com/chromedp/examples/blob/master/text/main.go
-	err := bow.Open(url)
-	if err == nil {
-		isInStock, isValidProductPage = GetStockInfofFromReqestBody(bow)
 
-	} else {
-		isInStock = false
-		isValidProductPage = false
-		fmt.Printf("invalid URL %v serched\n", url)
-	}
+	// https://github.com/chromedp/examples/blob/master/text/main.go
+	isInStock, isValidProductPage = GetStockInfofFromReqestBody(url)
+
+	// if err == nil {
+
+	// } else {
+	// 	isInStock = false
+	// 	isValidProductPage = false
+	// 	fmt.Printf("invalid URL %v serched\n", url)
+	// }
 	return isInStock, isValidProductPage
 }
 
-func GetStockInfofFromReqestBody(bow *browser.Browser) (isInStock, isValidProductPage bool) {
-	result := bow.Find("div.onlyBuyNowButton")
-	result.Each(func(_ int, s *goquery.Selection) {
-		fmt.Println(s.Text())
-	})
-	if stockString := result.Text(); stockString != "" {
+func GetStockInfofFromReqestBody(url string) (isInStock, isValidProductPage bool) {
+	baseContext, baseCancel := context.WithDeadline(
+		context.Background(), time.Now().Add(time.Second*10))
+	ctx, cancel := chromedp.NewContext(baseContext)
+	defer cancel()
+	defer baseCancel()
+
+	// run task list
+	var stockString string
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(url),
+		chromedp.WaitVisible("#__nuxt", chromedp.ByID),
+		chromedp.Text(`div.buyNowButton`, &stockString, chromedp.BySearch),
+	)
+	if err == nil && stockString != "" {
 		stockString = strings.TrimSpace(stockString)
 		fmt.Println(stockString)
 		stockString = strings.ToLower(stockString)
-
 		switch stockString {
 		case "out of stock":
 			isInStock = false
@@ -205,7 +212,7 @@ func GetStockInfofFromReqestBody(bow *browser.Browser) (isInStock, isValidProduc
 			isValidProductPage = true
 		default:
 			isValidProductPage = false
-			fmt.Println("invalid url inputed ")
+			fmt.Println("invalid url inputted ")
 
 		}
 	}

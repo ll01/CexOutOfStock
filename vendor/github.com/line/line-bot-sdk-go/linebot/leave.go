@@ -15,9 +15,8 @@
 package linebot
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // LeaveGroup method
@@ -46,12 +45,10 @@ func (call *LeaveGroupCall) WithContext(ctx context.Context) *LeaveGroupCall {
 func (call *LeaveGroupCall) Do() (*BasicResponse, error) {
 	endpoint := fmt.Sprintf(APIEndpointLeaveGroup, call.groupID)
 	res, err := call.c.post(call.ctx, endpoint, nil)
-	if res != nil && res.Body != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToBasicResponse(res)
 }
 
@@ -81,11 +78,9 @@ func (call *LeaveRoomCall) WithContext(ctx context.Context) *LeaveRoomCall {
 func (call *LeaveRoomCall) Do() (*BasicResponse, error) {
 	endpoint := fmt.Sprintf(APIEndpointLeaveRoom, call.roomID)
 	res, err := call.c.post(call.ctx, endpoint, nil)
-	if res != nil && res.Body != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
 		return nil, err
 	}
+	defer closeResponse(res)
 	return decodeToBasicResponse(res)
 }

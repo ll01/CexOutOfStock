@@ -15,14 +15,13 @@
 package linebot
 
 import (
+	"context"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
-
-	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // APIEndpoint constants
@@ -33,6 +32,7 @@ const (
 	APIEndpointReplyMessage          = "/v2/bot/message/reply"
 	APIEndpointMulticast             = "/v2/bot/message/multicast"
 	APIEndpointGetMessageContent     = "/v2/bot/message/%s/content"
+	APIEndpointGetMessageQuota       = "/v2/bot/message/quota"
 	APIEndpointLeaveGroup            = "/v2/bot/group/%s/leave"
 	APIEndpointLeaveRoom             = "/v2/bot/room/%s/leave"
 	APIEndpointGetProfile            = "/v2/bot/profile/%s"
@@ -47,8 +47,21 @@ const (
 	APIEndpointGetUserRichMenu       = "/v2/bot/user/%s/richmenu"
 	APIEndpointLinkUserRichMenu      = "/v2/bot/user/%s/richmenu/%s"
 	APIEndpointUnlinkUserRichMenu    = "/v2/bot/user/%s/richmenu"
+	APIEndpointSetDefaultRichMenu    = "/v2/bot/user/all/richmenu/%s"
+	APIEndpointDefaultRichMenu       = "/v2/bot/user/all/richmenu"   // Get: GET / Delete: DELETE
 	APIEndpointDownloadRichMenuImage = "/v2/bot/richmenu/%s/content" // Download: GET / Upload: POST
 	APIEndpointUploadRichMenuImage   = "/v2/bot/richmenu/%s/content" // Download: GET / Upload: POST
+	APIEndpointBulkLinkRichMenu      = "/v2/bot/richmenu/bulk/link"
+	APIEndpointBulkUnlinkRichMenu    = "/v2/bot/richmenu/bulk/unlink"
+
+	APIEndpointGetAllLIFFApps = "/liff/v1/apps"
+	APIEndpointAddLIFFApp     = "/liff/v1/apps"
+	APIEndpointUpdateLIFFApp  = "/liff/v1/apps/%s/view"
+	APIEndpointDeleteLIFFApp  = "/liff/v1/apps/%s"
+
+	APIEndpointLinkToken = "/v2/bot/user/%s/linkToken"
+
+	APIEndpointGetMessageDelivery = "/v2/bot/message/delivery/%s"
 )
 
 // Client type
@@ -121,7 +134,16 @@ func (client *Client) do(ctx context.Context, req *http.Request) (*http.Response
 	req.Header.Set("Authorization", "Bearer "+client.channelToken)
 	req.Header.Set("User-Agent", "LINE-BotSDK-Go/"+version)
 	if ctx != nil {
-		return ctxhttp.Do(ctx, client.httpClient, req)
+		res, err := client.httpClient.Do(req.WithContext(ctx))
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				err = ctx.Err()
+			default:
+			}
+		}
+
+		return res, err
 	}
 	return client.httpClient.Do(req)
 
@@ -147,10 +169,25 @@ func (client *Client) post(ctx context.Context, endpoint string, body io.Reader)
 	return client.do(ctx, req)
 }
 
+func (client *Client) put(ctx context.Context, endpoint string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest("PUT", client.url(endpoint), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	return client.do(ctx, req)
+}
+
 func (client *Client) delete(ctx context.Context, endpoint string) (*http.Response, error) {
 	req, err := http.NewRequest("DELETE", client.url(endpoint), nil)
 	if err != nil {
 		return nil, err
 	}
 	return client.do(ctx, req)
+}
+
+func closeResponse(res *http.Response) error {
+	defer res.Body.Close()
+	_, err := io.Copy(ioutil.Discard, res.Body)
+	return err
 }

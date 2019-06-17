@@ -29,17 +29,6 @@ const (
 	TemplateTypeImageCarousel TemplateType = "image_carousel"
 )
 
-// TemplateActionType type
-type TemplateActionType string
-
-// TemplateActionType constants
-const (
-	TemplateActionTypeURI            TemplateActionType = "uri"
-	TemplateActionTypeMessage        TemplateActionType = "message"
-	TemplateActionTypePostback       TemplateActionType = "postback"
-	TemplateActionTypeDatetimePicker TemplateActionType = "datetimepicker"
-)
-
 // ImageAspectRatioType type
 type ImageAspectRatioType string
 
@@ -61,7 +50,7 @@ const (
 // Template interface
 type Template interface {
 	json.Marshaler
-	template()
+	Template()
 }
 
 // ButtonsTemplate type
@@ -191,11 +180,17 @@ func (t *ImageCarouselTemplate) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// implements Template interface
-func (*ConfirmTemplate) template()       {}
-func (*ButtonsTemplate) template()       {}
-func (*CarouselTemplate) template()      {}
-func (*ImageCarouselTemplate) template() {}
+// Template implements Template interface
+func (*ConfirmTemplate) Template() {}
+
+// Template implements Template interface
+func (*ButtonsTemplate) Template() {}
+
+// Template implements Template interface
+func (*CarouselTemplate) Template() {}
+
+// Template implements Template interface
+func (*ImageCarouselTemplate) Template() {}
 
 // NewConfirmTemplate function
 func NewConfirmTemplate(text string, left, right TemplateAction) *ConfirmTemplate {
@@ -246,145 +241,5 @@ func NewImageCarouselColumn(imageURL string, action TemplateAction) *ImageCarous
 	return &ImageCarouselColumn{
 		ImageURL: imageURL,
 		Action:   action,
-	}
-}
-
-// TemplateAction interface
-type TemplateAction interface {
-	json.Marshaler
-	templateAction()
-}
-
-// URITemplateAction type
-type URITemplateAction struct {
-	Label string
-	URI   string
-}
-
-// MarshalJSON method of URITemplateAction
-func (a *URITemplateAction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Type  TemplateActionType `json:"type"`
-		Label string             `json:"label"`
-		URI   string             `json:"uri"`
-	}{
-		Type:  TemplateActionTypeURI,
-		Label: a.Label,
-		URI:   a.URI,
-	})
-}
-
-// MessageTemplateAction type
-type MessageTemplateAction struct {
-	Label string
-	Text  string
-}
-
-// MarshalJSON method of MessageTemplateAction
-func (a *MessageTemplateAction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Type  TemplateActionType `json:"type"`
-		Label string             `json:"label"`
-		Text  string             `json:"text"`
-	}{
-		Type:  TemplateActionTypeMessage,
-		Label: a.Label,
-		Text:  a.Text,
-	})
-}
-
-// PostbackTemplateAction type
-type PostbackTemplateAction struct {
-	Label string
-	Data  string
-	Text  string
-}
-
-// MarshalJSON method of PostbackTemplateAction
-func (a *PostbackTemplateAction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Type  TemplateActionType `json:"type"`
-		Label string             `json:"label"`
-		Data  string             `json:"data"`
-		Text  string             `json:"text,omitempty"`
-	}{
-		Type:  TemplateActionTypePostback,
-		Label: a.Label,
-		Data:  a.Data,
-		Text:  a.Text,
-	})
-}
-
-// DatetimePickerTemplateAction type
-type DatetimePickerTemplateAction struct {
-	Label   string
-	Data    string
-	Mode    string
-	Initial string
-	Max     string
-	Min     string
-}
-
-// MarshalJSON method of DatetimePickerTemplateAction
-func (a *DatetimePickerTemplateAction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Type    TemplateActionType `json:"type"`
-		Label   string             `json:"label"`
-		Data    string             `json:"data"`
-		Mode    string             `json:"mode"`
-		Initial string             `json:"initial,omitempty"`
-		Max     string             `json:"max,omitempty"`
-		Min     string             `json:"min,omitempty"`
-	}{
-		Type:    TemplateActionTypeDatetimePicker,
-		Label:   a.Label,
-		Data:    a.Data,
-		Mode:    a.Mode,
-		Initial: a.Initial,
-		Max:     a.Max,
-		Min:     a.Min,
-	})
-}
-
-// implements TemplateAction interface
-func (*URITemplateAction) templateAction()            {}
-func (*MessageTemplateAction) templateAction()        {}
-func (*PostbackTemplateAction) templateAction()       {}
-func (*DatetimePickerTemplateAction) templateAction() {}
-
-// NewURITemplateAction function
-func NewURITemplateAction(label, uri string) *URITemplateAction {
-	return &URITemplateAction{
-		Label: label,
-		URI:   uri,
-	}
-}
-
-// NewMessageTemplateAction function
-func NewMessageTemplateAction(label, text string) *MessageTemplateAction {
-	return &MessageTemplateAction{
-		Label: label,
-		Text:  text,
-	}
-}
-
-// NewPostbackTemplateAction function
-func NewPostbackTemplateAction(label, data, text string) *PostbackTemplateAction {
-	return &PostbackTemplateAction{
-		Label: label,
-		Data:  data,
-		Text:  text,
-	}
-}
-
-// NewDatetimePickerTemplateAction function
-func NewDatetimePickerTemplateAction(label, data, mode, initial, max, min string) *DatetimePickerTemplateAction {
-	return &DatetimePickerTemplateAction{
-		Label:   label,
-		Data:    data,
-		Mode:    mode,
-		Initial: initial,
-		Max:     max,
-		Min:     min,
 	}
 }
