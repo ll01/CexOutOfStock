@@ -23,6 +23,7 @@ type LineMessagingSettings struct {
 	Port               int    `json:"port"`
 	CertFile           string `json:"certFile"`
 	KeyFile            string `json:"keyFile"`
+	IsTLS              bool
 	Bot                *linebot.Client
 }
 
@@ -58,7 +59,7 @@ func GetLineMessagingSettings() *LineMessagingSettings {
 		} else {
 			messagingSettings = SettingsEnv()
 		}
-
+		messagingSettings.IsTLS = messagingSettings.CertFile != ""
 	})
 	return messagingSettings
 }

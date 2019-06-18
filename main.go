@@ -44,22 +44,20 @@ func RunServer() {
 	go startUpdatePolling()
 	http.HandleFunc("/", MainPage)
 	http.HandleFunc("/line", LineWebHook)
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(settings.Port), nil))
-	// log.Fatal(http.ListenAndServeTLS(
-	// 	":"+strconv.Itoa(settings.Port),
-	// 	settings.CertFile, settings.KeyFile, nil))
+	if settings.IsTLS {
+		log.Fatal(http.ListenAndServeTLS(
+			":"+strconv.Itoa(settings.Port),
+			settings.CertFile, settings.KeyFile, nil))
+	} else {
+		log.Fatal(http.ListenAndServe(":"+strconv.Itoa(settings.Port), nil))
+	}
 
 }
 
 //MainPage fuction for http response
 func MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
-	if url, ok := r.Header["url"]; ok {
-		InsertEntryIntoDatabase(url[0], globalid)
-	}
 }
-
-var globalid = ""
 
 //LineWebHook fuction for http response main function for communicating with the line api
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +73,6 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 					var targetsID = event.Source.UserID
 
 					messageToSendToUser := InsertEntryIntoDatabase(message.Text, targetsID)
-					globalid = targetsID
 					SendRepy(replyToken, messageToSendToUser, bot)
 				}
 
@@ -96,7 +93,7 @@ func SendRepy(replyToken, message string, bot *linebot.Client) {
 }
 
 func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
-	isInStock, isValidProductPage := GetStockInfoFromUrl(URLOfProductPage)
+	isInStock, isValidProductPage, s := GetStockInfoFromUrl(URLOfProductPage)
 	var messageToOutput = ""
 	if isValidProductPage == true {
 		if isInStock == false {
@@ -119,6 +116,7 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 	} else {
 		messageToOutput = "Sorry this isn't a valid CEX product page. url " + (URLOfProductPage)
 	}
+	messageToOutput = s
 	return messageToOutput
 }
 
@@ -138,7 +136,7 @@ func startUpdatePolling() {
 
 func CheckProductsToUpdate(productData map[string]string, bot *linebot.Client) {
 	for userid, productURL := range productData {
-		isInStock, _ := GetStockInfoFromUrl(productURL)
+		isInStock, _, _ := GetStockInfoFromUrl(productURL)
 		if isInStock == true {
 			go SendPushNotification(userid, "item "+productURL+" is in stock", bot)
 			prep, err := database.Prepare("DELETE FROM products WHERE userid =? AND url = ?")
@@ -177,10 +175,10 @@ func SendPushNotificationToMultipleUsers(messageData map[string]string, bot *lin
 	}
 }
 
-func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
+func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool, s string) {
 
 	// https://github.com/chromedp/examples/blob/master/text/main.go
-	isInStock, isValidProductPage = GetStockInfofFromReqestBody(url)
+	isInStock, isValidProductPage, s = GetStockInfofFromReqestBody(url)
 
 	// if err == nil {
 
@@ -189,10 +187,10 @@ func GetStockInfoFromUrl(url string) (isInStock, isValidProductPage bool) {
 	// 	isValidProductPage = false
 	// 	fmt.Printf("invalid URL %v serched\n", url)
 	// }
-	return isInStock, isValidProductPage
+	return isInStock, isValidProductPage, s
 }
 
-func GetStockInfofFromReqestBody(url string) (isInStock, isValidProductPage bool) {
+func GetStockInfofFromReqestBody(url string) (isInStock, isValidProductPage bool, s string) {
 	baseContext, baseCancel := context.WithDeadline(
 		context.Background(), time.Now().Add(time.Second*10))
 	ctx, cancel := chromedp.NewContext(baseContext)
@@ -204,7 +202,8 @@ func GetStockInfofFromReqestBody(url string) (isInStock, isValidProductPage bool
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
 		chromedp.WaitVisible("#__nuxt", chromedp.ByID),
-		chromedp.Text(`div.buyNowButton`, &stockString, chromedp.BySearch),
+		// chromedp.Text(`div.buyNowButton`, &stockString, chromedp.BySearch),
+		chromedp.Text(`html`, &stockString, chromedp.BySearch),
 	)
 	if err == nil && stockString != "" {
 		stockString = strings.TrimSpace(stockString)
@@ -223,7 +222,7 @@ func GetStockInfofFromReqestBody(url string) (isInStock, isValidProductPage bool
 
 		}
 	}
-	return isInStock, isValidProductPage
+	return isInStock, isValidProductPage, stockString
 }
 
 func OpenDatabase() *sql.DB {
