@@ -51,7 +51,7 @@ func TestProductInStock(t *testing.T) {
 
 func TestProuctOutOfStock(t *testing.T) {
 	DeleteTestRecords()
-	var TestURL = "https://uk.webuy.com/product-detail?id=sgranvigtx650ti1gb&categoryName=graphics-cards-pci-e&superCatName=computing&title=nvidia-geforce-gtx-650-ti-1gb-dx11"
+	var TestURL = "https://uk.webuy.com/product-detail?id=slapmicsurboo2410a&categoryName=laptops-windows&superCatName=computing&title=microsoft-surface-book-2-i7-8650u-16gb-ram-1tb-ssd-gtx-1050-13%22-win10-a"
 	var TestID = "TestID"
 	database = OpenDatabase()
 	defer database.Close()
