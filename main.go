@@ -54,7 +54,12 @@ func RunServer() {
 //MainPage fuction for http response
 func MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello. This is our first Go web app on Heroku!")
+	if url, ok := r.Header["url"]; ok {
+		InsertEntryIntoDatabase(url[0], globalid)
+	}
 }
+
+var globalid = ""
 
 //LineWebHook fuction for http response main function for communicating with the line api
 func LineWebHook(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +73,9 @@ func LineWebHook(w http.ResponseWriter, r *http.Request) {
 				case *linebot.TextMessage:
 					var replyToken = event.ReplyToken
 					var targetsID = event.Source.UserID
+
 					messageToSendToUser := InsertEntryIntoDatabase(message.Text, targetsID)
+					globalid = targetsID
 					SendRepy(replyToken, messageToSendToUser, bot)
 				}
 
@@ -110,7 +117,7 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 		}
 
 	} else {
-		messageToOutput = "Sorry this isn't a valid CEX product page. url" + (URLOfProductPage)
+		messageToOutput = "Sorry this isn't a valid CEX product page. url " + (URLOfProductPage)
 	}
 	return messageToOutput
 }
