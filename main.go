@@ -110,7 +110,7 @@ func InsertEntryIntoDatabase(URLOfProductPage, ID string) string {
 		}
 
 	} else {
-		messageToOutput = "Sorry this isn't a valid CEX product page. valid:" + strconv.FormatBool(isValidProductPage)
+		messageToOutput = "Sorry this isn't a valid CEX product page. url" + (URLOfProductPage)
 	}
 	return messageToOutput
 }
